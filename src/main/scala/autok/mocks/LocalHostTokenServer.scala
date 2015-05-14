@@ -1,7 +1,5 @@
 package autok.mocks
 
-import java.util.Date
-
 import autok.authentication.SimpleAuthentication._
 import com.github.tomakehurst.wiremock.WireMockServer
 import com.github.tomakehurst.wiremock.client.ResponseDefinitionBuilder
@@ -11,6 +9,7 @@ import com.github.tomakehurst.wiremock.core.Container
 import com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig
 import com.github.tomakehurst.wiremock.extension.ResponseTransformer
 import com.github.tomakehurst.wiremock.http.{ MultiValue, Request, ResponseDefinition }
+import spray.http.DateTime
 import spray.json._
 
 import scala.util.{ Random, Try }
@@ -154,7 +153,7 @@ final class DateTimeResponseTransformer extends BaseResponseTransformer {
     validOpt
       .fold(401 -> ErrorResponse(error = "not authorized").toJson.compactPrint) {
         case LocalHostTokenServer.TokenValid =>
-          200 -> DateTimeResponse(datetime = new Date().toString).toJson.compactPrint
+          200 -> DateTimeResponse(datetime = DateTime.now.toIsoDateTimeString).toJson.compactPrint
         case LocalHostTokenServer.TokenExpired =>
           401 -> ErrorResponse(error = "token expired").toJson.compactPrint
       }

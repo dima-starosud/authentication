@@ -14,8 +14,8 @@ libraryDependencies ++=
   Seq(
     "com.typesafe" % "config" % "1.3.0",
     "io.spray" %% "spray-json" % "1.3.2",
+    "io.spray" % "spray-http" % "1.3.1",
     "com.github.tomakehurst" % "wiremock" % "1.55",
-    "io.spray" %% "spray-testkit" % "1.3.3" % "test",
     "org.scalaj" %% "scalaj-http" % "1.1.4",
     "org.specs2" %% "specs2-core" % "3.5" % "test"
   )
