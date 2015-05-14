@@ -54,12 +54,12 @@ object LocalHostTokenServer {
           classOf[RemoveTokenResponseTransformer].getName))
 
     server.stubFor(
-      post(urlPathEqualTo("/token"))
+      post(urlMatching("/token\\?.*"))
         .willReturn(aResponse()
           .withTransformers(classOf[NewTokenResponseTransformer].getName)))
 
     server.stubFor(
-      post(urlPathEqualTo("/token/reset"))
+      post(urlMatching("/token/refresh\\?.*"))
         .willReturn(aResponse()
           .withTransformers(classOf[RemoveTokenResponseTransformer].getName)))
 
