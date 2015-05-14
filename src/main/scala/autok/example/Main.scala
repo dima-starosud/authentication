@@ -2,6 +2,7 @@ package autok.example
 
 import autok.authentication.{ Authentication, SimpleAuthentication, StubAuthServerConfig, Token }
 import autok.mocks.LocalHostTokenServer
+import com.github.tomakehurst.wiremock.core.Container
 
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -24,14 +25,22 @@ object Main extends App {
     }
   }
 
-  val auth = LocalHostTokenServer.startAuthServer()
-  val datetime = LocalHostTokenServer.startDateTimeService()
+  var mocks: Seq[Container] = Nil
 
-  val authService: Authentication = new SimpleAuthentication(
-    StubAuthServerConfig(
-      port = auth.port(),
-      username = LocalHostTokenServer.USER,
-      password = LocalHostTokenServer.PASS))
+  val authService: Authentication =
+    args match {
+      case Array() =>
+        new SimpleAuthentication
+      case Array("--mock") =>
+        val auth = LocalHostTokenServer.startAuthServer()
+        val datetime = LocalHostTokenServer.startDateTimeService()
+        mocks = Seq(auth, datetime)
+        new SimpleAuthentication(
+          StubAuthServerConfig(
+            port = auth.port(),
+            username = LocalHostTokenServer.USER,
+            password = LocalHostTokenServer.PASS))
+    }
 
   val tokenFuture = authService.getToken
   tokenFuture.failed.foreach(println)
@@ -40,6 +49,5 @@ object Main extends App {
     Await.ready(tokenFuture.map(loop), Duration.Inf)
   }
 
-  auth.shutdown()
-  datetime.shutdown()
+  mocks.foreach(_.shutdown())
 }
