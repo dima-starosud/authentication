@@ -1,4 +1,4 @@
-package autok
+package autok.authentication
 
 import scala.concurrent.Future
 

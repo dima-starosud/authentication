@@ -1,4 +1,4 @@
-package autok
+package autok.authentication
 
 import com.typesafe.config.ConfigFactory
 import spray.json._

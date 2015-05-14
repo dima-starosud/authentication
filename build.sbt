@@ -28,8 +28,6 @@ libraryDependencies ++= {
   )
 }
 
-mainClass in Global := Some("autok.example.Main")
-
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 scalacOptions in Test ++= Seq("-Yrangepos")
