@@ -12,7 +12,7 @@ resolvers ++= Seq(
 
 libraryDependencies ++=
   Seq(
-    "com.typesafe" % "config" % "1.3.0",
+    "com.typesafe" % "config" % "1.2.1",
     "io.spray" %% "spray-json" % "1.3.2",
     "io.spray" % "spray-http" % "1.3.1",
     "com.github.tomakehurst" % "wiremock" % "1.55",
@@ -23,3 +23,5 @@ libraryDependencies ++=
 scalacOptions ++= Seq("-unchecked", "-deprecation")
 
 scalacOptions in Test ++= Seq("-Yrangepos")
+
+javacOptions in Compile ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked", "-Xlint:deprecation")
