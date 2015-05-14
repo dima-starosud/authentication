@@ -25,12 +25,13 @@ object SimpleAuthentication extends DefaultJsonProtocol {
 class SimpleAuthentication(authServerConfig: AuthServerConfig = DefaultAuthServerConfig) extends Authentication {
 
   import SimpleAuthentication._
+  import authServerConfig._
 
   private val authUrl =
-    s"http://${authServerConfig.host}/token?user=${authServerConfig.username}&pass=${authServerConfig.password}"
+    s"http://$host:$port/token?user=$username&pass=$password"
 
   private def resetUrl(oldToken: String) =
-    s"http://${authServerConfig.host}/token/refresh?token=$oldToken"
+    s"http://$host:$port/token/refresh?token=$oldToken"
 
   override def getToken: Future[Token] = {
     Future {
@@ -65,3 +66,9 @@ object DefaultAuthServerConfig extends AuthServerConfig {
   override lazy val username: String = config.getString("username")
   override lazy val password: String = config.getString("password")
 }
+
+case class StubAuthServerConfig(
+  host: String = "localhost",
+  username: String,
+  password: String,
+  port: Int) extends AuthServerConfig
