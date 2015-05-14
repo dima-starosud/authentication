@@ -21,6 +21,7 @@ libraryDependencies ++= {
     "io.spray" %% "spray-json" % "1.3.2",
     "com.typesafe.akka" %% "akka-slf4j" % akkaVersion,
 
+    "com.github.tomakehurst" % "wiremock" % "1.55",
     "com.typesafe.akka" %% "akka-testkit" % akkaVersion % "test",
     "io.spray" %% "spray-testkit" % sprayVersion % "test",
     "org.scalaj" %% "scalaj-http" % "1.1.4",
