@@ -4,8 +4,8 @@ import com.typesafe.config.ConfigFactory
 import spray.json._
 
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.{Future, blocking}
-import scalaj.http.{Http, HttpResponse}
+import scala.concurrent.{ Future, blocking }
+import scalaj.http.{ Http, HttpResponse }
 
 trait AuthServerConfig {
   def host: String
@@ -43,6 +43,7 @@ class SimpleAuthentication(authServerConfig: AuthServerConfig = DefaultAuthServe
   }
 
   override def tokenExpired(oldToken: Token): Unit = {
+    // TODO looks like we are ignoring token here; clarify this part
     perform(resetUrl(oldToken))
   }
 
