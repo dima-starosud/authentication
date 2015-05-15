@@ -1,7 +1,7 @@
 package autok
 
 import autok.authentication.{ Authentication, SimpleAuthentication, StubAuthServerConfig }
-import autok.mocks.LocalHostTokenServer
+import autok.mocks.{ LocalHostTokenServer => Mock }
 import org.specs2.concurrent.ExecutionEnv
 import org.specs2.mutable.Specification
 import org.specs2.specification.AfterAll
@@ -13,7 +13,7 @@ import scala.util.Try
 class AuthenticationSpec extends Specification with AfterAll {
   implicit val executionEnv = ExecutionEnv.fromGlobalExecutionContext
 
-  val auth = LocalHostTokenServer.startAuthServer()
+  val auth = Mock.startAuthServer()
 
   def createAuthService(user: String, pass: String): Authentication =
     new SimpleAuthentication(
@@ -33,28 +33,21 @@ class AuthenticationSpec extends Specification with AfterAll {
     }
 
     "fail on wrong username" in {
-      createAuthService("wrong", LocalHostTokenServer.PASS).getToken must
+      createAuthService("wrong", Mock.PASS).getToken must
         throwAn[IllegalArgumentException]("not authorized").await
     }
 
     "fail on wrong password" in {
-      createAuthService(LocalHostTokenServer.USER, "wrong").getToken must
+      createAuthService(Mock.USER, "wrong").getToken must
         throwAn[IllegalArgumentException]("not authorized").await
     }
 
     "return valid token using correct username/password" in {
-      createAuthService(LocalHostTokenServer.USER, LocalHostTokenServer.PASS)
-        .getToken
-        .map(LocalHostTokenServer.tokenState) must
-        beSome[LocalHostTokenServer.TokenState](LocalHostTokenServer.TokenValid).await
-    }
-
-    "refresh token just once" in {
-      val service = createAuthService(LocalHostTokenServer.USER, LocalHostTokenServer.PASS)
-
+      val service = createAuthService(Mock.USER, Mock.PASS)
       val token = Try(Await.result(service.getToken, 1.second))
-      token must beSuccessfulTry
-        .updateMessage("expecting token for this case: ".+)
+
+      token.map(Mock.tokenState) must beSuccessfulTry(beSome[Mock.TokenState](Mock.TokenValid))
+        .updateMessage("expecting existing and valid token: ".+)
 
       for (token <- token) {
         service.tokenExpired(token) must not(throwAn[Exception])
