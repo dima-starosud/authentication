@@ -15,7 +15,8 @@ import spray.json._
 import scala.util.{ Random, Try }
 
 object LocalHostTokenServer {
-  val TOKEN_LENGTH = 128
+  // use short value for simplicity
+  val TOKEN_LENGTH = 16
 
   sealed trait TokenState
   case object TokenValid extends TokenState
@@ -23,21 +24,30 @@ object LocalHostTokenServer {
 
   private var tokens = Map.empty[String, TokenState]
 
-  def newToken(): String = {
+  def newToken(): String = synchronized {
     val token = Random.alphanumeric.take(TOKEN_LENGTH).mkString
     tokens = tokens.updated(token, TokenValid)
+    println(s"New token: $token")
     token
   }
 
-  def invalidateToken(token: String): Option[TokenState] = {
+  def invalidateToken(token: String): Option[TokenState] = synchronized {
     val validOpt = tokens.get(token)
     for (TokenValid <- validOpt) {
       tokens = tokens.updated(token, TokenExpired)
+      println(s"Expired token: $token")
     }
     validOpt
   }
 
-  def tokenState(token: String): Option[TokenState] = {
+  def resetToken(token: String): Option[String] = synchronized {
+    val validOpt = tokens.get(token)
+    // TODO should we allow resetting valid token?
+    for (TokenExpired <- validOpt)
+      yield newToken()
+  }
+
+  def tokenState(token: String): Option[TokenState] = synchronized {
     tokens.get(token)
   }
 
@@ -126,9 +136,9 @@ final class NewTokenResponseTransformer extends BaseResponseTransformer {
 final class RemoveTokenResponseTransformer extends BaseResponseTransformer {
   override def transform(request: Request): (Int, String) = {
     val token = getSingle(request.queryParameter, "token")
-    LocalHostTokenServer.invalidateToken(token) match {
-      case Some(LocalHostTokenServer.TokenValid) =>
-        200 -> TokenResponse(token = LocalHostTokenServer.newToken()).toJson.compactPrint
+    LocalHostTokenServer.resetToken(token) match {
+      case Some(newToken) =>
+        200 -> TokenResponse(token = newToken).toJson.compactPrint
       case _ =>
         401 -> ErrorResponse(error = "not authorized").toJson.compactPrint
     }

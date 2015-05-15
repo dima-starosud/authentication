@@ -44,17 +44,34 @@ class AuthenticationSpec extends Specification with AfterAll {
 
     "return valid token using correct username/password" in {
       val service = createAuthService(Mock.USER, Mock.PASS)
-      val token = Try(Await.result(service.getToken, 1.second))
+      val token1 = Try(Await.result(service.getToken, 1.second))
 
-      token.map(Mock.tokenState) must beSuccessfulTry(beSome[Mock.TokenState](Mock.TokenValid))
+      token1.map(Mock.tokenState) must beSuccessfulTry(beSome[Mock.TokenState](Mock.TokenValid))
         .updateMessage("expecting existing and valid token: ".+)
 
-      for (token <- token) {
-        service.tokenExpired(token) must not(throwAn[Exception])
-          .updateMessage("first time invalidation should succeed: ".+)
+      for (token1 <- token1) {
+        service.getToken must beEqualTo(token1).await
+          .updateMessage("service returns the same token".+)
 
-        service.tokenExpired(token) must throwAn[IllegalArgumentException]("not authorized")
-          .updateMessage("second time invalidation should fail: ".+)
+        Mock.invalidateToken(token1) must beSome[Mock.TokenState](Mock.TokenValid)
+          .updateMessage("simulate token invalidation".+)
+
+        service.tokenExpired("garbage") must not(throwAn[Exception])
+          .updateMessage("invalidation always succeeds: ".+)
+
+        service.getToken must beEqualTo(token1).await
+          .updateMessage("service returns the same token even after incorrect invalidation".+)
+
+        service.tokenExpired(token1) must not(throwAn[Exception])
+          .updateMessage("invalidation always succeeds: ".+)
+
+        val token2 = Try(Await.result(service.getToken, 1.second))
+
+        token2.map(Mock.tokenState) must beSuccessfulTry(beSome[Mock.TokenState](Mock.TokenValid))
+          .updateMessage("after invalidation expecting valid token: ".+)
+
+        token2 must beSuccessfulTry(not(beEqualTo(token1)))
+          .updateMessage("invalidation must reset token: ".+)
       }
 
       ok

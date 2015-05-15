@@ -27,6 +27,8 @@ class SimpleAuthentication(authServerConfig: AuthServerConfig = DefaultAuthServe
   import SimpleAuthentication._
   import authServerConfig._
 
+  private var token = Option.empty[Token]
+
   private val authUrl =
     s"http://$host:$port/token?user=$username&pass=$password"
 
@@ -34,27 +36,37 @@ class SimpleAuthentication(authServerConfig: AuthServerConfig = DefaultAuthServe
     s"http://$host:$port/token/refresh?token=$oldToken"
 
   override def getToken: Future[Token] = {
-    Future {
-      blocking {
-        synchronized {
-          perform(authUrl)
-        }
-      }
+    syncFuture {
+      token.getOrElse(resetToken(authUrl))
     }
   }
 
   override def tokenExpired(oldToken: Token): Unit = {
-    // TODO looks like we are ignoring token here; clarify this part
-    perform(resetUrl(oldToken))
+    val resetFuture = syncFuture {
+      if (token.contains(oldToken)) {
+        token = None
+        resetToken(resetUrl(oldToken))
+      }
+    }
+
+    for (error <- resetFuture.failed) {
+      println(s"Token refresh failed: $error")
+    }
   }
 
-  private def perform(url: String): Token = {
+  private def resetToken(url: String): Token = {
     Http(url).postData("").asString match {
       case HttpResponse(body, 200, _) =>
-        body.parseJson.convertTo[TokenResponse].token
+        val newToken = body.parseJson.convertTo[TokenResponse].token
+        token = Some(newToken)
+        newToken
       case HttpResponse(body, 401, _) =>
         throw new IllegalArgumentException(body.parseJson.convertTo[ErrorResponse].error)
     }
+  }
+
+  private def syncFuture[T](block: => T): Future[T] = {
+    Future(blocking(synchronized(block)))
   }
 }
 
