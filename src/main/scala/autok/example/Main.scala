@@ -9,18 +9,20 @@ import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.{ Await, blocking }
 import scala.concurrent.duration.Duration
 import scala.io.StdIn
+import scala.util.Try
 import scalaj.http.Http
 
 object Main extends App {
   @tailrec
   final def loop(token: Token): Unit = {
+    println()
+    print("URL> ")
     val url = StdIn.readLine().trim
     if (url.nonEmpty) {
-      val result = Http(url)
+      val result = Try(Http(url)
         .header("Authorization", token)
-        .asString
-      println(s"Exit code: ${result.code}")
-      println(result.body)
+        .asString)
+      println(result)
       loop(token)
     }
   }
@@ -45,6 +47,7 @@ object Main extends App {
   val tokenFuture = authService.getToken
   tokenFuture.failed.foreach(println)
 
+  println("Enter empty line to exit")
   blocking {
     Await.ready(tokenFuture.map(loop), Duration.Inf)
   }
