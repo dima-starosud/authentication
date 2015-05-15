@@ -1,5 +1,7 @@
 package autok.example
 
+import java.util.{ TimerTask, Timer }
+
 import autok.authentication.{ Authentication, SimpleAuthentication, StubAuthServerConfig, Token }
 import autok.mocks.LocalHostTokenServer
 import com.github.tomakehurst.wiremock.core.Container
@@ -42,6 +44,14 @@ object Main extends App {
             port = auth.port(),
             username = LocalHostTokenServer.USER,
             password = LocalHostTokenServer.PASS))
+
+        // invalidate tokens every 10 seconds
+        (new Timer).schedule(new TimerTask {
+          override def run(): Unit = {
+            LocalHostTokenServer.invalidateAllTokens()
+          }
+        }, 10000)
+
         (service, mocks)
     }
 

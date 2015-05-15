@@ -40,6 +40,10 @@ object LocalHostTokenServer {
     validOpt
   }
 
+  def invalidateAllTokens(): Unit = {
+    tokens.keySet.foreach(invalidateToken)
+  }
+
   def resetToken(token: String): Option[String] = synchronized {
     val validOpt = tokens.get(token)
     // TODO should we allow resetting valid token?
