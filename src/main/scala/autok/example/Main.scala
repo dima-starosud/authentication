@@ -12,6 +12,8 @@ import scala.io.StdIn
 import scala.util.Try
 import scalaj.http.Http
 
+case class Mock(containers: Seq[Container])
+
 object Main extends App {
   @tailrec
   final def loop(token: Token): Unit = {
@@ -27,21 +29,20 @@ object Main extends App {
     }
   }
 
-  var mocks: Seq[Container] = Nil
-
-  val authService: Authentication =
+  val (authService, mocks): (Authentication, Seq[Container]) =
     args match {
       case Array() =>
-        new SimpleAuthentication
+        (new SimpleAuthentication, Nil)
       case Array("--mock") =>
         val auth = LocalHostTokenServer.startAuthServer()
         val datetime = LocalHostTokenServer.startDateTimeService()
-        mocks = Seq(auth, datetime)
-        new SimpleAuthentication(
+        val mocks = Seq(auth, datetime)
+        val service = new SimpleAuthentication(
           StubAuthServerConfig(
             port = auth.port(),
             username = LocalHostTokenServer.USER,
             password = LocalHostTokenServer.PASS))
+        (service, mocks)
     }
 
   val tokenFuture = authService.getToken
